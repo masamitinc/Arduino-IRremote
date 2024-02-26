@@ -944,7 +944,8 @@ void IRsend::sendBiphaseData(uint16_t aBiphaseTimeUnit, uint32_t aData, uint_fas
  * This disturbance is no problem, if the exceedance is small and does not happen too often.
  */
 void IRsend::mark(uint16_t aMarkMicros) {
-
+    this->rawbuf[this->rawlen] = aMarkMicros; // MICROS_PER_TICK;
+    this->rawlen++;
 #if defined(SEND_PWM_BY_TIMER) || defined(USE_NO_SEND_PWM)
 #  if !defined(NO_LED_FEEDBACK_CODE)
     if (FeedbackLEDControl.LedFeedbackEnabled == LED_FEEDBACK_ENABLED_FOR_SEND) {
@@ -1140,6 +1141,8 @@ void IRsend::IRLedOff() {
  * A space is "no output", so just wait.
  */
 void IRsend::space(uint16_t aSpaceMicros) {
+    this->rawbuf[this->rawlen] = aSpaceMicros; // MICROS_PER_TICK;
+    this->rawlen++;
     customDelayMicroseconds(aSpaceMicros);
 }
 
@@ -1180,6 +1183,14 @@ void IRsend::customDelayMicroseconds(unsigned long aMicroseconds) {
  * If IR_SEND_PIN is defined, maximum PWM frequency for an AVR @16 MHz is 170 kHz (180 kHz if NO_LED_FEEDBACK_CODE is defined)
  */
 void IRsend::enableIROut(uint_fast8_t aFrequencyKHz) {
+
+    this->rawlen = 1;
+    this->rawbuf[0] = (uint16_t) - 1;
+    for (int i = 1; i < RAW_BUFFER_LENGTH; i++)
+    {
+        this->rawbuf[i] = 0;
+    }
+
 #if defined(SEND_PWM_BY_TIMER)
     timerConfigForSend(aFrequencyKHz); // must set output pin mode and disable receive interrupt if required, e.g. uses the same resource
 
